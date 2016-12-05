@@ -72,7 +72,7 @@ def build_info(account=None, name=None, currency=None, leverage=None, time=None,
 
 
 if __name__ == '__main__':
-    file = '../TEST_FILE/MT4Trade.htm'
+    file = '../_TEST_FILE/MT4Trade.htm'
     x = html_table(file)
 
     a = x.fillna('')
