@@ -21,6 +21,7 @@ def read_html(html_file):
     elif 'MetaQuotes' in html_generator:
         print('it is a mt4 html file')
         # Todo: handle mt4 html file
+        # read_html_mt4(html_file, mq_html_content)
     elif 'MetaTrader 5' in html_generator:
         print('it is a mt5 html file')
         # Todo: handle mt5 html file
@@ -40,8 +41,7 @@ def html_content(html_file):
 
 def html_table(html_file):
     # print(len(pd.read_html(html_file, encoding='UTF-8', index_col=False)))
-    return pd.read_html(html_file, encoding='UTF-8', index_col=False)[0]
-
+    return pd.read_html(html_file, encoding='UTF-8', na_values='', keep_default_na=False)[0]
 
 
 def read_html_mt4(html_content):
@@ -59,6 +59,19 @@ def read_html_mt4(html_content):
         return None
 
 
+def read_html_mt4_trade(html_file, html_content):
+    broker = html_content.find('b').get_text()
+    tr = html_content.find_all('tr')
+    print(tr)
+    # table = html_table(html_file)
+
+    pass
+
+
+
+
+
+
 def build_info(account=None, name=None, currency=None, leverage=None, time=None, group=None, broker=None):
     return {
         'Account': account,
@@ -73,11 +86,15 @@ def build_info(account=None, name=None, currency=None, leverage=None, time=None,
 
 if __name__ == '__main__':
     file = '../_TEST_FILE/MT4Trade.htm'
-    x = html_table(file)
+    content = html_content(file)
+    table = html_table(file)
+    read_html_mt4_trade(file, content)
+    # a = x.fillna('')
 
-    a = x.fillna('')
-    print(list(a.ix[0]))
+    # a = list(table.ix[0])
 
+    # print(table.to_records()[0])
+    # np.array
     # x.to_csv('../abc.csv')
     # print(x)
 
