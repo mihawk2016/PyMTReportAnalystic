@@ -97,11 +97,11 @@ def read_html_mt4_trade(html_file, html_content):
 
     # for i in range(summary_index):
     #     print(list(table.iloc[i]).count(''))
-
+    
     print(table)
     # print(b)
     # for x in comment:
-    # 
+    #
     #     print(x)
     # table = html_table(html_file)
 
