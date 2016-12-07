@@ -63,19 +63,19 @@ def read_html_mt4_trade(html_file, html_content):
     table = pd.read_html(html_file, encoding='UTF-8', na_values=' ', keep_default_na=False)[0]
     summary_index = list(table[0]).index('Summary:')
     table = table[:summary_index]
-    # table.columns = [['1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2']]
-    # print(table, '\n')
-    broker = html_content.find('b').get_text()
-    comment = [tr.td.get('title') if tr.td.has_attr('title') else ''
-               for tr in html_content.find_all('tr', limit=summary_index)]
+    table_info = [string for string in table.ix[0] if string is not '']
 
-    # b = table.select(lambda x: list(x)[0].isdigit(), axis=1)
-    b = []
+    print(table_info)
+    first_col_list = list(table[0])
+    ticket_index = [first_col_list[index].isdigit() for index in range(len(first_col_list))]
+    table = table[ticket_index]
+    broker = html_content.find('b').get_text()
+    tr = html_content.find_all('tr', limit=summary_index)
+    ticket_tr = [tr[index] for index in table.index]
+    comment = [tr.td.get('title') if tr.td.has_attr('title') else '' for tr in ticket_tr]
 
     def get_group(table_row):
         row_list = list(table_row)
-        if not row_list[0].isdigit():
-            return ''
         leer_count = row_list.count('')
         if leer_count is 0:
             return 'Closed'
@@ -89,16 +89,17 @@ def read_html_mt4_trade(html_file, html_content):
             return 'Working'
         return ''
     table['Group'] = table.apply(get_group, axis=1)
-    # a = table.apply(get_group, axis=1)
-    # print(a)
-
     table['Comment'] = comment
+
+    def info_dict(string):
+        string.replace(' ', '')
+
 
     # for i in range(summary_index):
     #     print(list(table.iloc[i]).count(''))
 
     print(table)
-    print(b)
+    # print(b)
     # for x in comment:
     #
     #     print(x)
@@ -125,7 +126,7 @@ def build_info(account=None, name=None, currency=None, leverage=None, time=None,
 
 if __name__ == '__main__':
     import timeit
-    file = '../_TEST_FILE/MT4Trade.htm'
+    file = '../_TEST_FILE/MT4Trade_01.htm'
     content = html_content(file)
     # table = html_table(file)
 
