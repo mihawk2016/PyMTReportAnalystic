@@ -1,16 +1,9 @@
 from bs4 import BeautifulSoup
 import pandas as pd
+import re
 import numpy as np
 
-
-
-
-
-
-
-
-
-
+from defines import Generator, TicketGroup, Info, TicketColumn
 
 
 def read_html(html_file):
@@ -63,75 +56,68 @@ def read_html_mt4_trade(html_file, html_content):
     table = pd.read_html(html_file, encoding='UTF-8', na_values=' ', keep_default_na=False)[0]
     summary_index = list(table[0]).index('Summary:')
     table = table[:summary_index]
-    table_info = [string for string in table.ix[0] if string is not '']
 
-    print(table_info)
+    def info_dict(string):
+        if re.match('^[0-9]{4}', string) is not None:
+            return 'time', string
+        else:
+            string = string.replace(' ', '')
+            string_split = string.split(':')
+            return string_split[0].lower(), string_split[-1]
+    table_info = {k: v for k, v in [info_dict(string) for string in table.ix[0] if string is not '']}
+    info = build_info(**table_info, broker=html_content.find('b').get_text(), generator=Generator.MT4TRADE.value)
     first_col_list = list(table[0])
     ticket_index = [first_col_list[index].isdigit() for index in range(len(first_col_list))]
     table = table[ticket_index]
-    broker = html_content.find('b').get_text()
     tr = html_content.find_all('tr', limit=summary_index)
     ticket_tr = [tr[index] for index in table.index]
-    comment = [tr.td.get('title') if tr.td.has_attr('title') else '' for tr in ticket_tr]
 
     def get_group(table_row):
         row_list = list(table_row)
         leer_count = row_list.count('')
         if leer_count is 0:
-            return 'Closed'
+            return TicketGroup.CLOSED.value
         if leer_count is 9:
-            return 'Money'
+            return TicketGroup.MONEY.value
         if leer_count is 3:
-            return 'Pending'
+            return TicketGroup.PENDING.value
         if leer_count is 1:
-            return 'Open'
+            return TicketGroup.OPEN.value
         if leer_count is 5:
-            return 'Working'
+            return TicketGroup.WORKING.value
         return ''
-    table['Group'] = table.apply(get_group, axis=1)
-    table['Comment'] = comment
+    table[TicketColumn.GROUP.value] = table.apply(get_group, axis=1)
+    table[TicketColumn.COMMENT.value] = [tr.td.get('title') if tr.td.has_attr('title') else '' for tr in ticket_tr]
+    table.loc[table.Group == TicketGroup.MONEY.value, 13] = table.loc[table.Group == TicketGroup.MONEY.value, 4]
+    table.loc[table.Group == TicketGroup.MONEY.value, 3] = table.loc[table.Group == TicketGroup.MONEY.value, 4] = ''
+    table.loc[table.Group == TicketGroup.PENDING.value, 10] = ''
+    # table.columns
 
-    def info_dict(string):
-        string.replace(' ', '')
-
-
-    # for i in range(summary_index):
-    #     print(list(table.iloc[i]).count(''))
-    
-    print(table)
-    # print(b)
-    # for x in comment:
-    #
-    #     print(x)
-    # table = html_table(html_file)
-
-    pass
+    return table, info
 
 
-
-
-
-
-def build_info(account=None, name=None, currency=None, leverage=None, time=None, group=None, broker=None):
+def build_info(generator=None, account=None, name=None, currency=None,
+               leverage=None, time=None, group=None, broker=None):
     return {
-        'Account': account,
-        'Name': name,
-        'Currency': currency,
-        'Leverage': leverage,
-        'Time': time,
-        'Group': group,
-        'Broker': broker
+        Info.GENERATOR.value: generator,
+        Info.ACCOUNT.value: account,
+        Info.NAME.value: name,
+        Info.CURRENCY.value: currency,
+        Info.LEVERAGE.value: leverage,
+        Info.TIME.value: time,
+        Info.GROUP.value: group,
+        Info.BROKER.value: broker
     }
 
 
 if __name__ == '__main__':
     import timeit
-    file = '../_TEST_FILE/MT4Trade_01.htm'
+    file = '../_TEST_FILE/MT4Trade.htm'
     content = html_content(file)
     # table = html_table(file)
 
-    read_html_mt4_trade(file, content)
-
+    x = read_html_mt4_trade(file, content)
+    print(x)
     # def TEST():
     #     return read_html_mt4_trade(file, content)
     # print(timeit.timeit('TEST()', setup='from __main__ import TEST', number=10))
