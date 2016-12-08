@@ -1,4 +1,61 @@
 
+file.html.mt4.trade <- function(file.link, html.parse) {
+  # ''' work with mt4 statement html file '''
+  # 2016-08-16: Done
+  require(XML)
+  html_table <- readHTMLTable(file.link, stringsAsFactors = FALSE, encoding = 'UTF-8')[[1]]
+  build.report(
+    type = 'MT4 - Trade',
+    tickets = file.html.mt4.trade.tickets(html_table, html.parse),
+    info = file.html.mt4.trade.info(html.parse)
+  )
+} # 2016-08-16: Done
+
+file.html.mt4.trade.info <- function(html.parse) {
+  # ''' get mt4 html trade file: info '''
+  # 2016-08-16: Done
+  require(XML)
+  infos <- sapply(getNodeSet(html.parse, '//b')[1:8], xmlValue)
+  time.index <- which(grepl('Trans', infos)) - 1
+  others <- infos[2:(time.index - 1)]
+  build.report.info(
+    account = others[grep('Account', others)],
+    name = others[grep('Name', others)],
+    broker = infos[1],
+    currency = others[grep('Currency', others)],
+    leverage = others[grep('Leverage', others)],
+    time = infos[time.index]
+  )
+} # 2016-08-16: Done
+
+file.html.mt4.trade.tickets <- function(html.table, html.parse) {
+  # ''' mt4 html trade tickets '''
+  # 2016-08-16: Done
+  # 2016-08-16: Optimate
+  html.table[html.table == ''] <- NA
+  html.table$Comment <- file.html.mt4.trade.tickets.comment(html.parse)
+  suppressWarnings(tickets <- html.table[which(!is.na(as.numeric(html.table[, 1]))),])
+  if (nrow(tickets) == 0) return(NULL)
+  na.count <- as.numeric(rowSums(is.na(tickets)))
+  build.report.tickets.group(
+    money = build.report.tickets.money.from.table(tickets[which(na.count == 9), ], c(1, 2, 5, 15)),
+    closed = build.report.tickets.closed.from.table(tickets[which(na.count == 0), ], 1:15),
+    open = build.report.tickets.open.from.table(tickets[which(na.count == 1), ], c(1:8, 10:15)),
+    pending = build.report.tickets.pending.from.table(tickets[which(na.count == 3), ], c(1:10, 15)),
+    working = build.report.tickets.working.from.table(tickets[which(na.count == 5), ], c(1:8, 10, 15))
+  )
+} # 2016-08-16: Optimate
+
+file.html.mt4.trade.tickets.comment <- function(html.parse) {
+  # ''' get comment for mt4 statement html file '''
+  # 2016-08-12: ToDo: getNodeSet() arg:fun= xmlChildren
+  require(XML)
+  tag_tr_children <- sapply(getNodeSet(html.parse, '//tr'), xmlChildren)
+  comments <- sapply(tag_tr_children, function(title) {
+    comment <- xmlGetAttr(title[[1]], 'title')
+    return(ifelse(is.null(comment), '', comment))
+  })[-1]
+} # 2016-08-12: ToDo
 
 build.report.info <- function(account = NA, group = NA, name = NA, broker = NA, currency = NA, leverage = NA, time = NA) {
   # ''' create info dataframe '''

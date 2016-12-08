@@ -1,9 +1,8 @@
 from bs4 import BeautifulSoup
 import pandas as pd
 import re
-import numpy as np
 
-from defines import Generator, TicketGroup, Info, TicketColumn
+from defines import Generator, TicketGroup, Info, TicketColumn, TICKET_COLUMNS
 
 
 def read_html(html_file):
@@ -32,19 +31,13 @@ def html_content(html_file):
     return mq_html_content
 
 
-# def html_table(html_file):
-    # print(len(pd.read_html(html_file, encoding='UTF-8', index_col=False)))
-    # return pd.read_html(html_file, encoding='UTF-8', na_values=' ', keep_default_na=False)[0]
-
-
-def read_html_mt4(html_content):
+def read_html_mt4(html_file, html_content):
     """"""
     title = html_content.title.string
     if title is None:
         return None
     elif 'Statement' in title:
-        print('it is a mt4 trades html file')
-        # Todo: handle mt4 trades html file
+        return read_html_mt4_trade(html_file, html_content)
     elif 'Strategy' in title:
         print('it is a mt4 EA html file')
         # Todo: handle mt4 EA html file
@@ -91,13 +84,28 @@ def read_html_mt4_trade(html_file, html_content):
     table.loc[table.Group == TicketGroup.MONEY.value, 13] = table.loc[table.Group == TicketGroup.MONEY.value, 4]
     table.loc[table.Group == TicketGroup.MONEY.value, 3] = table.loc[table.Group == TicketGroup.MONEY.value, 4] = ''
     table.loc[table.Group == TicketGroup.PENDING.value, 10] = ''
-    # table.columns
-
+    table.columns = TICKET_COLUMNS[:16]
     return table, info
+
+
+
+
+
 
 
 def build_info(generator=None, account=None, name=None, currency=None,
                leverage=None, time=None, group=None, broker=None):
+    """
+    :param generator: generator of html page in ['MT4-Trade', 'MT4-EA', 'MT5-Trade', 'MT5-EA']
+    :param account: login number
+    :param name: login name
+    :param currency: account currency
+    :param leverage: account leverage
+    :param time: file create time
+    :param group: account group in database
+    :param broker: account broker
+    :return: a dict of all infos of the file
+    """
     return {
         Info.GENERATOR.value: generator,
         Info.ACCOUNT.value: account,
@@ -116,11 +124,13 @@ if __name__ == '__main__':
     content = html_content(file)
     # table = html_table(file)
 
-    x = read_html_mt4_trade(file, content)
-    print(x)
-    # def TEST():
-    #     return read_html_mt4_trade(file, content)
-    # print(timeit.timeit('TEST()', setup='from __main__ import TEST', number=10))
+    # x = read_html_mt4_trade(file, content)
+    # print(x)
+
+
+    def TEST():
+        read_html_mt4_trade(file, content)
+    print(timeit.timeit('TEST()', setup='from __main__ import TEST', number=1))
 
     # a = x.fillna('')
 

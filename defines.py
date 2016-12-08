@@ -44,3 +44,21 @@ class TicketColumn(enum.Enum):
     PROFIT = 'Profit'
     GROUP = 'Group'
     COMMENT = 'Comment'
+
+
+TICKET_COLUMNS = [TicketColumn.TICKET.value,
+                  TicketColumn.OPEN_TIME.value,
+                  TicketColumn.TYPE.value,
+                  TicketColumn.SIZE.value,
+                  TicketColumn.ITEM.value,
+                  TicketColumn.OPEN_PRICE.value,
+                  TicketColumn.SL.value,
+                  TicketColumn.TP.value,
+                  TicketColumn.CLOSE_TIME.value,
+                  TicketColumn.CLOSE_PRICE.value,
+                  TicketColumn.COMMISSION.value,
+                  TicketColumn.TAXES.value,
+                  TicketColumn.SWAP.value,
+                  TicketColumn.PROFIT.value,
+                  TicketColumn.GROUP.value,
+                  TicketColumn.COMMENT.value]
