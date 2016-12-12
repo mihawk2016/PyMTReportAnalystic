@@ -46,6 +46,13 @@ class TicketColumn(enum.Enum):
     COMMENT = 'Comment'
 
 
+class GroupFieldCount(enum.IntEnum):
+    CLOSED = 0
+    MONEY = 9
+    PENDING = 3
+    OPEN = 1
+    WORKING = 5
+
 TICKET_COLUMNS = [TicketColumn.TICKET.value,
                   TicketColumn.OPEN_TIME.value,
                   TicketColumn.TYPE.value,
@@ -62,3 +69,25 @@ TICKET_COLUMNS = [TicketColumn.TICKET.value,
                   TicketColumn.PROFIT.value,
                   TicketColumn.GROUP.value,
                   TicketColumn.COMMENT.value]
+
+TICKET_COLUMN_GROUP = {
+    'INT': [TicketColumn.TICKET.value],
+    'TIME': [TicketColumn.OPEN_TIME.value,
+             TicketColumn.CLOSE_TIME.value],
+    'STRING': [TicketColumn.TYPE.value,
+               TicketColumn.ITEM.value,
+               TicketColumn.GROUP.value,
+               TicketColumn.COMMENT.value],
+    'FLOAT': [TicketColumn.SIZE.value,
+              TicketColumn.OPEN_PRICE.value,
+              TicketColumn.SL.value,
+              TicketColumn.TP.value,
+              TicketColumn.CLOSE_PRICE.value],
+    'MONEY': [TicketColumn.COMMISSION.value,
+              TicketColumn.TAXES.value,
+              TicketColumn.SWAP.value,
+              TicketColumn.PROFIT.value]
+}
+
+
+

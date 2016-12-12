@@ -1,8 +1,9 @@
 from bs4 import BeautifulSoup
 import pandas as pd
+import numpy as np
 import re
 
-from defines import Generator, TicketGroup, Info, TicketColumn, TICKET_COLUMNS
+from defines import Generator, TicketGroup, Info, TicketColumn, TICKET_COLUMNS, GroupFieldCount, TICKET_COLUMN_GROUP
 
 
 def read_html(html_file):
@@ -11,9 +12,7 @@ def read_html(html_file):
     if html_generator is None:
         return None
     elif 'MetaQuotes' in html_generator:
-        print('it is a mt4 html file')
-        # Todo: handle mt4 html file
-        # read_html_mt4(html_file, mq_html_content)
+        return read_html_mt4(html_file, mq_html_content)
     elif 'MetaTrader 5' in html_generator:
         print('it is a mt5 html file')
         # Todo: handle mt5 html file
@@ -46,7 +45,7 @@ def read_html_mt4(html_file, html_content):
 
 
 def read_html_mt4_trade(html_file, html_content):
-    table = pd.read_html(html_file, encoding='UTF-8', na_values=' ', keep_default_na=False)[0]
+    table = pd.read_html(html_file, encoding='UTF-8')[0]
     summary_index = list(table[0]).index('Summary:')
     table = table[:summary_index]
 
@@ -57,37 +56,44 @@ def read_html_mt4_trade(html_file, html_content):
             string = string.replace(' ', '')
             string_split = string.split(':')
             return string_split[0].lower(), string_split[-1]
-    table_info = {k: v for k, v in [info_dict(string) for string in table.ix[0] if string is not '']}
+    table_info = {k: v for k, v in [info_dict(string) for string in table.ix[0] if string is not np.nan]}
     info = build_info(**table_info, broker=html_content.find('b').get_text(), generator=Generator.MT4TRADE.value)
     first_col_list = list(table[0])
-    ticket_index = [first_col_list[index].isdigit() for index in range(len(first_col_list))]
+    ticket_index = [first_col_list[index] is not np.nan and first_col_list[index].isdigit()
+                    for index in range(len(first_col_list))]
     table = table[ticket_index]
     tr = html_content.find_all('tr', limit=summary_index)
     ticket_tr = [tr[index] for index in table.index]
 
     def get_group(table_row):
         row_list = list(table_row)
-        leer_count = row_list.count('')
-        if leer_count is 0:
+        leer_count = row_list.count(np.nan)
+        if leer_count == GroupFieldCount.CLOSED:
             return TicketGroup.CLOSED.value
-        if leer_count is 9:
+        if leer_count == GroupFieldCount.MONEY:
             return TicketGroup.MONEY.value
-        if leer_count is 3:
+        if leer_count == GroupFieldCount.PENDING:
             return TicketGroup.PENDING.value
-        if leer_count is 1:
+        if leer_count == GroupFieldCount.OPEN:
             return TicketGroup.OPEN.value
-        if leer_count is 5:
+        if leer_count == GroupFieldCount.WORKING:
             return TicketGroup.WORKING.value
-        return ''
+        return np.nan
     table[TicketColumn.GROUP.value] = table.apply(get_group, axis=1)
     table[TicketColumn.COMMENT.value] = [tr.td.get('title') if tr.td.has_attr('title') else '' for tr in ticket_tr]
     table.loc[table.Group == TicketGroup.MONEY.value, 13] = table.loc[table.Group == TicketGroup.MONEY.value, 4]
-    table.loc[table.Group == TicketGroup.MONEY.value, 3] = table.loc[table.Group == TicketGroup.MONEY.value, 4] = ''
-    table.loc[table.Group == TicketGroup.PENDING.value, 10] = ''
+    table.loc[table.Group == TicketGroup.MONEY.value, 3] = table.loc[table.Group == TicketGroup.MONEY.value, 4] = np.nan
+    table.loc[table.Group == TicketGroup.PENDING.value, 10] = np.nan
     table.columns = TICKET_COLUMNS[:16]
+
+    table[TICKET_COLUMN_GROUP['INT']] = table[TICKET_COLUMN_GROUP['INT']].astype(int)
+    table[TicketColumn.OPEN_TIME.value] = pd.to_datetime(table[TicketColumn.OPEN_TIME.value])
+    table[TicketColumn.CLOSE_TIME.value] = pd.to_datetime(table[TicketColumn.CLOSE_TIME.value])
+    table[TICKET_COLUMN_GROUP['TIME']] = table[TICKET_COLUMN_GROUP['TIME']].applymap(pd.to_datetime)
+    table[TICKET_COLUMN_GROUP['MONEY']] = table[TICKET_COLUMN_GROUP['MONEY']].applymap(
+        lambda x: np.nan if x is np.nan else float(x.replace(' ', '')))
+    table[TICKET_COLUMN_GROUP['FLOAT']] = table[TICKET_COLUMN_GROUP['FLOAT']].astype(float)
     return table, info
-
-
 
 
 
@@ -126,12 +132,12 @@ if __name__ == '__main__':
 
     # x = read_html_mt4_trade(file, content)
     # print(x)
-
-
+    # print(0 == GroupFieldCount.CLOSED)
+    # print('Ticket' == TicketColumn.TICKET.value)
     def TEST():
-        read_html_mt4_trade(file, content)
+        read_html_mt4_trade2(file, content)
     print(timeit.timeit('TEST()', setup='from __main__ import TEST', number=1))
-
+    print(TicketGroup.CLOSED.value)
     # a = x.fillna('')
 
     # a = list(table.ix[0])
