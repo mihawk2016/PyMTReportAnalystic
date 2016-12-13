@@ -25,7 +25,7 @@ def html_content(html_file):
     :param html_file: input a html file
     :return: content of html file
     """
-    with open(html_file, encoding='UTF-8') as f:
+    with open(html_file) as f:
         mq_html_content = BeautifulSoup(f, 'lxml')
     return mq_html_content
 
@@ -33,13 +33,15 @@ def html_content(html_file):
 def read_html_mt4(html_file, html_content):
     """"""
     title = html_content.title.string
+    print(title)
     if title is None:
         return None
     elif 'Statement' in title:
         return read_html_mt4_trade(html_file, html_content)
     elif 'Strategy' in title:
-        print('it is a mt4 EA html file')
-        # Todo: handle mt4 EA html file
+        # print('it is a mt4 EA html file')
+        # # Todo: handle mt4 EA html file
+        return read_html_mt4_EA(html_file, html_content)
     else:
         return None
 
@@ -96,8 +98,21 @@ def read_html_mt4_trade(html_file, html_content):
     return table, info
 
 
+def read_html_mt4_EA(html_file, html_content):
+    div = html_content.find_all('b', limit=3)
+    info = build_info(
+        name=div[1].string,
+        broker=div[2].string
+    )
+    print(info)
 
 
+    table = pd.read_html(html_file, encoding='gbk')
+    # table[0].to_csv('..\\abc.csv')
+    # print(table)
+    # print(html_file)
+    # print(html_content)
+    pass
 
 def build_info(generator=None, account=None, name=None, currency=None,
                leverage=None, time=None, group=None, broker=None):
@@ -126,18 +141,27 @@ def build_info(generator=None, account=None, name=None, currency=None,
 
 if __name__ == '__main__':
     import timeit
-    file = '../_TEST_FILE/MT4Trade.htm'
+    # file = '../_TEST_FILE/MT4Trade.htm'
+    file = '../_TEST_FILE/MT4EA.htm'
     content = html_content(file)
     # table = html_table(file)
 
-    # x = read_html_mt4_trade(file, content)
-    # print(x)
+    x = read_html_mt4(file, content)
+    print(x)
     # print(0 == GroupFieldCount.CLOSED)
     # print('Ticket' == TicketColumn.TICKET.value)
-    def TEST():
-        read_html_mt4_trade2(file, content)
-    print(timeit.timeit('TEST()', setup='from __main__ import TEST', number=1))
-    print(TicketGroup.CLOSED.value)
+    # def TEST():
+    #     read_html_mt4_trade(file, content)
+    # print(timeit.timeit('TEST()', setup='from __main__ import TEST', number=1))
+
+
+
+
+    # print(TicketGroup.CLOSED.value)
+
+
+
+
     # a = x.fillna('')
 
     # a = list(table.ix[0])
