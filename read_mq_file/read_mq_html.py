@@ -99,15 +99,21 @@ def read_html_mt4_trade(html_file, html_content):
 
 
 def read_html_mt4_EA(html_file, html_content):
+    table = pd.read_html(html_file, encoding='gbk')
+    first_table = table[0]
+    item = first_table.iloc[0, 1].split(' ')[0]
+    init_capital = float(first_table.iloc[-11, 1])
+    trade_table = table[1]
+    print(trade_table)
     div = html_content.find_all('b', limit=3)
     info = build_info(
         name=div[1].string,
-        broker=div[2].string
+        broker=div[2].string.split(' (')[0],
+        time=first_table.iloc[1, 1].split('- ')[-1][0:-1]
     )
     print(info)
 
 
-    table = pd.read_html(html_file, encoding='gbk')
     # table[0].to_csv('..\\abc.csv')
     # print(table)
     # print(html_file)

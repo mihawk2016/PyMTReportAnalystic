@@ -1,4 +1,32 @@
 
+#### strategy ####
+
+file.html.mt4.strategy <- function(file.link, html.parse) {
+  # ''' work with mt4 strategy from html file '''
+  # 2016-08-17: TESTING
+  info <- file.html.mt4.strategy.info(file.link, html.parse)
+  build.report(
+    type = 'MT4 - EA',
+    tickets = file.html.mt4.strategy.tickets(file.link, html.parse, info$Time),
+    info = info
+  )
+} # 2016-08-17: TESTING
+
+file.html.mt4.strategy.info <- function(file.link, html.parse) {
+  # ''' mt4 strategy info '''
+  # 2016-08-17: Done
+  require(XML)
+  head.lines <- getNodeSet(html.parse, '//b', fun = xmlValue)[2:3]
+  time.string <- getNodeSet(html.parse, '//tr', fun = xmlValue)[2]
+  nchar.time.string <- nchar(time.string)
+  time <- substr(time.string, nchar.time.string - 10, nchar.time.string - 1)
+  build.report.info(
+    name = head.lines[[1]],
+    broker = head.lines[[2]],
+    time = time
+  )
+} # 2016-08-17: Done
+
 file.html.mt4.trade <- function(file.link, html.parse) {
   # ''' work with mt4 statement html file '''
   # 2016-08-16: Done
