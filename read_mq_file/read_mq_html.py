@@ -39,8 +39,6 @@ def read_html_mt4(html_file, html_content):
     elif 'Statement' in title:
         return read_html_mt4_trade(html_file, html_content)
     elif 'Strategy' in title:
-        # print('it is a mt4 EA html file')
-        # # Todo: handle mt4 EA html file
         return read_html_mt4_EA(html_file, html_content)
     else:
         return None
@@ -84,7 +82,7 @@ def read_html_mt4_trade(html_file, html_content):
     table[TicketColumn.GROUP.value] = table.apply(get_group, axis=1)
     table[TicketColumn.COMMENT.value] = [tr.td.get('title') if tr.td.has_attr('title') else '' for tr in ticket_tr]
     table.loc[table.Group == TicketGroup.MONEY.value, 13] = table.loc[table.Group == TicketGroup.MONEY.value, 4]
-    table.loc[table.Group == TicketGroup.MONEY.value, 3] = table.loc[table.Group == TicketGroup.MONEY.value, 4] = np.nan
+    table.loc[table.Group == TicketGroup.MONEY.value, [2, 3, 4]] = np.nan
     table.loc[table.Group == TicketGroup.PENDING.value, 10] = np.nan
     table.columns = TICKET_COLUMNS[:16]
 
@@ -103,13 +101,20 @@ def read_html_mt4_EA(html_file, html_content):
     first_table = table[0]
     item = first_table.iloc[0, 1].split(' ')[0]
     init_capital = float(first_table.iloc[-11, 1])
+    time_list = first_table.iloc[1, 1].split(' - ')
+    begin_time = time_list[-2][-10:]
+    money_row = pd.DataFrame([[0, begin_time, init_capital, TicketGroup.MONEY.value, '']],
+                             columns=[TicketColumn.TICKET.value, TicketColumn.OPEN_TIME.value,
+                                      TicketColumn.PROFIT.value, TicketColumn.GROUP.value, TicketColumn.COMMENT.value])
+
+    print(money_row)
     trade_table = table[1]
     print(trade_table)
     div = html_content.find_all('b', limit=3)
     info = build_info(
         name=div[1].string,
         broker=div[2].string.split(' (')[0],
-        time=first_table.iloc[1, 1].split('- ')[-1][0:-1]
+        time=time_list[-1][0:-1]
     )
     print(info)
 
@@ -147,8 +152,8 @@ def build_info(generator=None, account=None, name=None, currency=None,
 
 if __name__ == '__main__':
     import timeit
-    # file = '../_TEST_FILE/MT4Trade.htm'
-    file = '../_TEST_FILE/MT4EA.htm'
+    file = '../_TEST_FILE/MT4Trade.htm'
+    # file = '../_TEST_FILE/MT4EA.htm'
     content = html_content(file)
     # table = html_table(file)
 
