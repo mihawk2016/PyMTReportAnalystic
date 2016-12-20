@@ -117,7 +117,7 @@ def read_html_mt4_EA(html_file, html_content):
         time=time_list[-1][0:-1]
     )
     print(info)
-
+    # ToDo: not finished!
 
     # table[0].to_csv('..\\abc.csv')
     # print(table)
