@@ -69,7 +69,7 @@ def read_html_mt4_trade(html_file, html_content):
         row_list = list(table_row)
         leer_count = row_list.count(np.nan)
         if leer_count == GroupFieldCount.CLOSED:
-            return TicketGroup.CLOSED.value
+            return TicketGroup.CLOSED.valueread
         if leer_count == GroupFieldCount.MONEY:
             return TicketGroup.MONEY.value
         if leer_count == GroupFieldCount.PENDING:
